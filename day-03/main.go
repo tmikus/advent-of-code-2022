@@ -2,8 +2,48 @@ package main
 
 import (
 	"bufio"
+	"math"
 	"os"
 )
+
+func getBadgePriorities(rucksacks []string) int {
+	groupCount := len(rucksacks) / 3
+	result := 0
+	for groupIndex := 0; groupIndex < groupCount; groupIndex++ {
+		startIndex := groupIndex * 3
+		endIndex := (groupIndex + 1) * 3
+		rucksacksForGroup := rucksacks[startIndex:endIndex]
+		result += getGroupPriority(rucksacksForGroup)
+	}
+	return result
+}
+
+func getGroupPriority(rucksacks []string) int {
+	commonItem := getCommonItem(rucksacks)
+	return getItemPriority(commonItem)
+}
+
+func getCommonItem(rucksacks []string) rune {
+	items := make(map[rune]int)
+	for memberIndex := 0; memberIndex < len(rucksacks); memberIndex++ {
+		bit := int(math.Pow(2, float64(memberIndex)))
+		for _, char := range rucksacks[memberIndex] {
+			items[char] |= bit
+		}
+	}
+	highestValue := 0
+	highestChar := ' '
+	for char, value := range items {
+		if value > highestValue {
+			highestValue = value
+			highestChar = char
+		}
+	}
+	if highestChar == ' ' {
+		panic("Well, this should not have happened...")
+	}
+	return highestChar
+}
 
 func getPriorities(rucksacks []string) int {
 	result := 0
@@ -17,24 +57,8 @@ func getPriority(rucksack string) int {
 	midPoint := len(rucksack) / 2
 	pocket1 := rucksack[:midPoint]
 	pocket2 := rucksack[midPoint:]
-	duplicatedItem := getDuplicatedItem(pocket1, pocket2)
+	duplicatedItem := getCommonItem([]string{pocket1, pocket2})
 	return getItemPriority(duplicatedItem)
-}
-
-func getDuplicatedItem(pocket1, pocket2 string) rune {
-	items := make(map[rune]int)
-	for _, char := range pocket1 {
-		items[char] = 1
-	}
-	for _, char := range pocket2 {
-		items[char] |= 2
-	}
-	for char, value := range items {
-		if value > 2 {
-			return char
-		}
-	}
-	panic("Well, this is not supposed to happen!")
 }
 
 func getItemPriority(item rune) int {
@@ -51,4 +75,5 @@ func main() {
 		rucksacks = append(rucksacks, scanner.Text())
 	}
 	println("Part 1 result: ", getPriorities(rucksacks))
+	println("Part 2 result: ", getBadgePriorities(rucksacks))
 }
