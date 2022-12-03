@@ -47,6 +47,41 @@ type MoveMapping struct {
 	Z Move
 }
 
+func evaluateDynamicStrategy(rounds []Round) int {
+	points := 0
+	for _, round := range rounds {
+		points += evaluateDynamicRound(round)
+	}
+	return points
+}
+
+func evaluateDynamicRound(round Round) int {
+	myMove := getMoveForRound(round)
+	roundResult := getRoundResult(myMove, round.Opponent)
+	return roundResult + int(myMove)
+}
+
+func getMoveForRound(round Round) Move {
+	if round.Opponent == Rock {
+		return getMoveForMe(round.Me, Scissors, Rock, Paper)
+	}
+	if round.Opponent == Paper {
+		return getMoveForMe(round.Me, Rock, Paper, Scissors)
+	}
+	// Scissors
+	return getMoveForMe(round.Me, Paper, Scissors, Rock)
+}
+
+func getMoveForMe(me EncryptedMove, lose, draw, win Move) Move {
+	if me == X {
+		return lose
+	}
+	if me == Y {
+		return draw
+	}
+	return win
+}
+
 func evaluateFixedStrategy(rounds []Round) int {
 	points := 0
 	mapping := MoveMapping{Rock, Paper, Scissors}
@@ -112,8 +147,9 @@ func main() {
 		rounds = append(rounds, round)
 	}
 	result := evaluateFixedStrategy(rounds)
-	//result := findBestResult(rounds)
-	println("Strategy result:", result)
+	println("Part 1 result:", result)
+	result = evaluateDynamicStrategy(rounds)
+	println("Part 2 result:", result)
 }
 
 func parseRoundFromLine(line string) Round {
