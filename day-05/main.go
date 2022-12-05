@@ -14,8 +14,16 @@ type Operation struct {
 	to    int
 }
 
-type Stack struct {
-	data []string
+type Stack []string
+
+//type Stack struct {
+//	data []string
+//}
+
+func moveAll(fromStack Stack, toStack Stack, count int) (Stack, Stack) {
+	toStack = append(toStack, fromStack[len(fromStack)-count:]...)
+	fromStack = fromStack[:len(fromStack)-count]
+	return fromStack, toStack
 }
 
 func move(fromStack Stack, toStack Stack, count int) (Stack, Stack) {
@@ -26,8 +34,8 @@ func move(fromStack Stack, toStack Stack, count int) (Stack, Stack) {
 }
 
 func moveOne(fromStack Stack, toStack Stack) (Stack, Stack) {
-	toStack.data = append(toStack.data, fromStack.data[len(fromStack.data)-1])
-	fromStack.data = fromStack.data[:len(fromStack.data)-1]
+	toStack = append(toStack, fromStack[len(fromStack)-1])
+	fromStack = fromStack[:len(fromStack)-1]
 	return fromStack, toStack
 }
 
@@ -55,7 +63,7 @@ func parseStack(lines []string, stackIndex int) Stack {
 		}
 		data = append(data, value)
 	}
-	return Stack{data}
+	return data
 }
 
 func parseStacks(lines []string) []Stack {
@@ -71,7 +79,7 @@ func parseStacks(lines []string) []Stack {
 func getResult(stacks []Stack) string {
 	result := ""
 	for _, stack := range stacks {
-		result += stack.data[len(stack.data)-1]
+		result += stack[len(stack)-1]
 	}
 	return result
 }
@@ -114,11 +122,40 @@ func runOperations(stacks []Stack, operations []Operation) []Stack {
 	return stacks
 }
 
+func runOptimisedOperation(stacks []Stack, operation Operation) []Stack {
+	fromStack := stacks[operation.from]
+	toStack := stacks[operation.to]
+	fromStack, toStack = moveAll(fromStack, toStack, operation.count)
+	stacks[operation.from] = fromStack
+	stacks[operation.to] = toStack
+	return stacks
+}
+
+func runOptimisedOperations(stacks []Stack, operations []Operation) []Stack {
+	for _, operation := range operations {
+		stacks = runOptimisedOperation(stacks, operation)
+	}
+	return stacks
+}
+
+func cloneStacks(stacks []Stack) []Stack {
+	output := make([]Stack, len(stacks))
+	for i, stack := range stacks {
+		output[i] = make([]string, len(stack))
+		copy(output[i], stack)
+	}
+	return output
+}
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	stacks := readStacks(scanner)
 	operations := readOperations(scanner)
-	stacks = runOperations(stacks, operations)
-	output := getResult(stacks)
+	part1Stacks := runOperations(cloneStacks(stacks), operations)
+	output := getResult(part1Stacks)
 	println("Part 1 result:", output)
+	part2Stacks := runOptimisedOperations(cloneStacks(stacks), operations)
+	output = getResult(part2Stacks)
+	println("Part 2 result:", output)
+
 }
