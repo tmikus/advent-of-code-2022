@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -96,7 +97,7 @@ func parseCommand(state *State) {
 	}
 }
 
-func parseStructure(commands []string) []*Directory {
+func initState(commands []string) State {
 	state := State{
 		allDirectories:      make([]*Directory, 0),
 		rootDirectory:       newDirectory("/"),
@@ -104,6 +105,12 @@ func parseStructure(commands []string) []*Directory {
 		currentCommandIndex: 0,
 		currentDirectory:    nil,
 	}
+	state.allDirectories = append(state.allDirectories, &state.rootDirectory)
+	return state
+}
+
+func parseStructure(commands []string) []*Directory {
+	state := initState(commands)
 	for state.currentCommandIndex < len(state.commands) {
 		parseCommand(&state)
 	}
@@ -147,6 +154,9 @@ func runCommandLs(state *State) {
 func addDirectorySizes(allDirectories []*Directory) int {
 	result := 0
 	for _, dir := range allDirectories {
+		if dir.name == "/" {
+			continue
+		}
 		size := dir.computeSize()
 		if size <= 100000 {
 			result += size
@@ -164,9 +174,41 @@ func readLines() []string {
 	return lines
 }
 
+const TOTAL_SPACE = 70000000
+const UPDATE_SIZE = 30000000
+
+func getRootDirectorySize(directories []*Directory) int {
+	for _, directory := range directories {
+		if directory.name == "/" {
+			return directory.computeSize()
+		}
+	}
+	panic("Root directory not found!")
+}
+
+func getSizeOfDirectoryToDelete(directories []*Directory) int {
+	sort.SliceStable(directories, func(leftIndex, rightIndex int) bool {
+		left := directories[leftIndex]
+		right := directories[rightIndex]
+		return left.computeSize() < right.computeSize()
+	})
+	rootDirectorySize := getRootDirectorySize(directories)
+	spaceLeft := TOTAL_SPACE - rootDirectorySize
+	minimumDirectorySize := UPDATE_SIZE - spaceLeft
+	for _, directory := range directories {
+		size := directory.computeSize()
+		if size >= minimumDirectorySize {
+			return size
+		}
+	}
+	panic("Impossible! No directory found?!")
+}
+
 func main() {
 	commands := readLines()
 	allDirectories := parseStructure(commands)
 	sizes := addDirectorySizes(allDirectories)
 	println("Day 1 result:", sizes)
+	result := getSizeOfDirectoryToDelete(allDirectories)
+	println("Day 2 result:", result)
 }
