@@ -7,22 +7,77 @@ import (
 )
 
 func countVisibleTrees(grid [][]int) int {
-	result := ""
 	count := 0
 	for y := 0; y < len(grid); y++ {
 		row := grid[y]
 		for x := 0; x < len(row); x++ {
 			if isTreeVisible(grid, x, y) {
-				result += "1"
 				count++
-			} else {
-				result += " "
 			}
 		}
-		result += "\n"
 	}
-	print(result)
 	return count
+}
+
+func getMostScenicTreeScore(grid [][]int) int {
+	mostScenicTreeScore := 0
+	for y := 0; y < len(grid); y++ {
+		row := grid[y]
+		for x := 0; x < len(row); x++ {
+			score := getViewRange(grid, x, y)
+			if score > mostScenicTreeScore {
+				mostScenicTreeScore = score
+			}
+		}
+	}
+	return mostScenicTreeScore
+}
+
+func getViewRange(grid [][]int, x, y int) int {
+	rowCount := len(grid)
+	colCount := len(grid[y])
+	return getViewRangeX(grid, x, y, 1, colCount) *
+		getViewRangeX(grid, x, y, -1, 0) *
+		getViewRangeY(grid, x, y, 1, rowCount) *
+		getViewRangeY(grid, x, y, -1, 0)
+}
+
+func getViewRangeX(
+	grid [][]int,
+	x int,
+	y int,
+	deltaX int,
+	targetX int,
+) int {
+	treeHeight := grid[y][x]
+	viewRange := 0
+	for index := x + deltaX; (deltaX > 0 && index < targetX) || (deltaX < 0 && index >= targetX); index += deltaX {
+		viewRange++
+		leftTreeHeight := grid[y][index]
+		if treeHeight <= leftTreeHeight {
+			return viewRange
+		}
+	}
+	return viewRange
+}
+
+func getViewRangeY(
+	grid [][]int,
+	x int,
+	y int,
+	deltaY int,
+	targetY int,
+) int {
+	treeHeight := grid[y][x]
+	viewRange := 0
+	for index := y + deltaY; (deltaY > 0 && index < targetY) || (deltaY < 0 && index >= targetY); index += deltaY {
+		viewRange++
+		leftTreeHeight := grid[index][x]
+		if treeHeight <= leftTreeHeight {
+			return viewRange
+		}
+	}
+	return viewRange
 }
 
 func isTreeVisible(grid [][]int, x, y int) bool {
@@ -101,6 +156,6 @@ func readGrid() [][]int {
 
 func main() {
 	grid := readGrid()
-	visibleTrees := countVisibleTrees(grid)
-	println("Part 1 result", visibleTrees)
+	println("Part 1 result", countVisibleTrees(grid))
+	println("Part 2 result", getMostScenicTreeScore(grid))
 }
