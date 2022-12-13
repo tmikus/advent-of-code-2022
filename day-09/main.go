@@ -33,6 +33,10 @@ func (vec *Vector2) add(value *Vector2) Vector2 {
 	}
 }
 
+func (vec *Vector2) eq(value Vector2) bool {
+	return vec.x == value.x && vec.y == value.y
+}
+
 func (vec *Vector2) subtract(value *Vector2) Vector2 {
 	return Vector2{
 		x: vec.x - value.x,
@@ -84,57 +88,100 @@ func readInstructions() []Instructions {
 	return lines
 }
 
+type Node struct {
+	position      Vector2
+	pastPositions []Vector2
+}
+
+func (node *Node) IsTouching(other *Node) bool {
+	diff := node.position.subtract(&other.position)
+	abs := diff.abs()
+	return abs.x <= 1 && abs.y <= 1
+}
+
+func newNode() Node {
+	return Node{
+		position:      newVector2(0, 0),
+		pastPositions: []Vector2{newVector2(0, 0)},
+	}
+}
+
+func (node *Node) SetPosition(value Vector2) {
+	node.position = value
+	node.pastPositions = append(node.pastPositions, value)
+}
+
 type State struct {
-	head              Vector2
-	tail              Vector2
-	pastTailPositions []Vector2
+	nodes []Node
 }
 
 func (state *State) RunInstruction(instruction Instructions) {
 	for step := 0; step < instruction.value; step++ {
-		state.head = state.head.add(&instruction.direction)
-		tailToHeadDistance := state.tail.subtract(&state.head)
-		absoluteDistance := tailToHeadDistance.abs()
-		if absoluteDistance.x > 1 {
-			if absoluteDistance.y > 0 {
-				state.SetTail(state.head.subtract(&instruction.direction))
-			} else {
-				state.SetTail(state.tail.add(&instruction.direction))
-			}
-		} else if absoluteDistance.y > 1 {
-			if absoluteDistance.x > 0 {
-				state.SetTail(state.head.subtract(&instruction.direction))
-			} else {
-				state.SetTail(state.tail.add(&instruction.direction))
-			}
+		head := &state.nodes[0]
+		head.position = head.position.add(&instruction.direction)
+		previousNode := head
+		for nodeIndex := 0; nodeIndex < len(state.nodes); nodeIndex++ {
+			node := &state.nodes[nodeIndex]
+			state.UpdateNode(node, previousNode)
+			previousNode = node
 		}
 	}
 }
 
-func (state *State) SetTail(value Vector2) {
-	state.tail = value
-	state.pastTailPositions = append(state.pastTailPositions, value)
+func (state *State) UpdateNode(node, prevNode *Node) {
+	if node.IsTouching(prevNode) {
+		return
+	}
+	diff := node.position.subtract(&prevNode.position)
+	update := newVector2(0, 0)
+	if diff.eq(newVector2(2, 0)) {
+		update = newVector2(-1, 0)
+	} else if diff.eq(newVector2(-2, 0)) {
+		update = newVector2(1, 0)
+	} else if diff.eq(newVector2(0, 2)) {
+		update = newVector2(0, -1)
+	} else if diff.eq(newVector2(0, -2)) {
+		update = newVector2(0, 1)
+	} else {
+		x := 0
+		y := 0
+		if diff.x < 0 {
+			x = 1
+		} else {
+			x = -1
+		}
+		if diff.y < 0 {
+			y = 1
+		} else {
+			y = -1
+		}
+		update = newVector2(x, y)
+	}
+	node.SetPosition(node.position.add(&update))
 }
 
 func countUniquePositions(state *State) int {
 	positions := make(map[string]bool)
-	for _, position := range state.pastTailPositions {
+	tail := state.nodes[len(state.nodes)-1]
+	for _, position := range tail.pastPositions {
 		key := fmt.Sprintf("%v;%v", position.x, position.y)
 		positions[key] = true
 	}
 	return len(positions)
 }
 
-func initState() State {
-	return State{
-		head:              newVector2(0, 0),
-		tail:              newVector2(0, 0),
-		pastTailPositions: []Vector2{newVector2(0, 0)},
+func initState(ropeLength int) State {
+	state := State{
+		nodes: []Node{},
 	}
+	for index := 0; index < ropeLength; index++ {
+		state.nodes = append(state.nodes, newNode())
+	}
+	return state
 }
 
-func runInstructions(instructions []Instructions) State {
-	state := initState()
+func runInstructions(instructions []Instructions, ropeLength int) State {
+	state := initState(ropeLength)
 	for _, instruction := range instructions {
 		state.RunInstruction(instruction)
 	}
@@ -143,6 +190,9 @@ func runInstructions(instructions []Instructions) State {
 
 func main() {
 	instructions := readInstructions()
-	state := runInstructions(instructions)
+	state := runInstructions(instructions, 2)
 	println("Part 1 result:", countUniquePositions(&state))
+
+	state2 := runInstructions(instructions, 10)
+	println("Part 2 result:", countUniquePositions(&state2))
 }
