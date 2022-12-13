@@ -8,8 +8,9 @@ import (
 )
 
 type Command struct {
-	noop  bool
-	value int
+	cycles int
+	noop   bool
+	value  int
 }
 
 func contains(s []int, e int) bool {
@@ -30,16 +31,30 @@ func parseCommand(value string) Command {
 			panic("Invalid number")
 		}
 		return Command{
-			noop:  false,
-			value: int(value),
+			cycles: 2,
+			noop:   false,
+			value:  int(value),
 		}
 	case "noop":
 		return Command{
-			noop:  true,
-			value: 0,
+			cycles: 1,
+			noop:   true,
+			value:  0,
 		}
 	}
 	panic("Unknown command")
+}
+
+func printCharacter(cycle, x int) {
+	position := (cycle - 1) % 40
+	if position >= x-1 && position <= x+1 {
+		print("#")
+	} else {
+		print(" ")
+	}
+	if (cycle % 40) == 0 {
+		print("\n")
+	}
 }
 
 func readCommands() []Command {
@@ -59,14 +74,11 @@ func main() {
 	x := 1
 	result := 0
 	for _, command := range commands {
-		cycles := 1
-		if !command.noop {
-			cycles = 2
-		}
-		for currentCycle := 0; currentCycle < cycles; currentCycle++ {
+		for currentCycle := 0; currentCycle < command.cycles; currentCycle++ {
 			if contains(EXPECTED_CYCLES, cycle) {
-				result += (cycle * x)
+				result += cycle * x
 			}
+			printCharacter(cycle, x)
 			cycle++
 		}
 		if !command.noop {
