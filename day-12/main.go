@@ -47,14 +47,31 @@ func contains(s *[]int, e int) bool {
 	return false
 }
 
-func findShortestPath(graph NodeGraph) []int {
-	paths := [][]int{
-		{graph.startNodeIndex},
+func findShortestPathFromAnyLowNode(graph NodeGraph) []int {
+	shortestPath, _ := findShortestPath(graph, graph.startNodeIndex)
+	for _, node := range graph.nodes {
+		if node.height != 0 {
+			continue
+		}
+		path, pathFound := findShortestPath(graph, node.index)
+		if !pathFound {
+			continue
+		}
+		if len(path) < len(shortestPath) {
+			shortestPath = path
+		}
 	}
-	visitedNodes := []int{graph.startNodeIndex}
+	return shortestPath
+}
+
+func findShortestPath(graph NodeGraph, startNodeIndex int) ([]int, bool) {
+	paths := [][]int{
+		{startNodeIndex},
+	}
+	visitedNodes := []int{startNodeIndex}
 	for {
 		if len(paths) == 0 {
-			panic("Couldn't find the path to the end!")
+			return []int{}, false
 		}
 		nextPaths := make([][]int, 0)
 		for pathIndex := 0; pathIndex < len(paths); pathIndex++ {
@@ -69,7 +86,7 @@ func findShortestPath(graph NodeGraph) []int {
 				newPath = append(newPath, targetNodeIndex)
 				visitedNodes = append(visitedNodes, targetNodeIndex)
 				if graph.targetNodeIndex == targetNodeIndex {
-					return newPath
+					return newPath, true
 				}
 				nextPaths = append(nextPaths, newPath)
 			}
@@ -160,6 +177,8 @@ func main() {
 	lines := readLines()
 	grid := parseNodesGrid(lines)
 	graph := parseNodeGraph(grid)
-	path := findShortestPath(graph)
-	println("Shortest path:", len(path)-1)
+	path, _ := findShortestPath(graph, graph.startNodeIndex)
+	println("Part 1 result:", len(path)-1)
+	path = findShortestPathFromAnyLowNode(graph)
+	println("Part 2 result:", len(path)-1)
 }
