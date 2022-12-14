@@ -53,6 +53,23 @@ type Test struct {
 	targetWhenTrue  int
 }
 
+func cloneMonkey(monkey Monkey) Monkey {
+	return Monkey{
+		inspectedItems: monkey.inspectedItems,
+		items:          monkey.items,
+		operation:      monkey.operation,
+		test:           monkey.test,
+	}
+}
+
+func cloneMonkeys(monkeys []Monkey) []Monkey {
+	result := make([]Monkey, 0)
+	for _, monkey := range monkeys {
+		result = append(result, cloneMonkey(monkey))
+	}
+	return result
+}
+
 func decreaseWorryLevel(worryLevel int) int {
 	return int(math.Floor(float64(worryLevel) / 3.0))
 }
@@ -151,25 +168,29 @@ func readLines() [][]string {
 	return monkeys
 }
 
-func runRound(monkeys *[]Monkey) {
+func runRound(monkeys *[]Monkey, shouldTrimWorryLevel bool, lcd int) {
 	for monkeyIndex := 0; monkeyIndex < len(*monkeys); monkeyIndex++ {
-		runRoundForMonkey(&(*monkeys)[monkeyIndex], monkeys)
+		runRoundForMonkey(&(*monkeys)[monkeyIndex], monkeys, shouldTrimWorryLevel, lcd)
 	}
 }
 
-func runRoundForMonkey(currentMonkey *Monkey, monkeys *[]Monkey) {
+func runRoundForMonkey(currentMonkey *Monkey, monkeys *[]Monkey, shouldTrimWorryLevel bool, lcd int) {
 	for _, worryLevel := range currentMonkey.items {
 		worryLevel = currentMonkey.operation.apply(worryLevel)
-		worryLevel = decreaseWorryLevel(worryLevel)
+		if shouldTrimWorryLevel {
+			worryLevel = trimWorryLevel(worryLevel, lcd)
+		} else {
+			worryLevel = decreaseWorryLevel(worryLevel)
+		}
 		runTest(worryLevel, currentMonkey, monkeys)
 	}
 	currentMonkey.inspectedItems += len(currentMonkey.items)
 	currentMonkey.items = make([]int, 0)
 }
 
-func runRounds(monkeys *[]Monkey, rounds int) {
+func runRounds(monkeys *[]Monkey, rounds int, shouldTrimWorryLevel bool, lcd int) {
 	for round := 0; round < rounds; round++ {
-		runRound(monkeys)
+		runRound(monkeys, shouldTrimWorryLevel, lcd)
 	}
 }
 
@@ -189,12 +210,35 @@ func sortMonkeysDescByInspectedItems(monkeys *[]Monkey) {
 	})
 }
 
+func trimWorryLevel(worryLevel int, lcd int) int {
+	return worryLevel % lcd
+}
+
+func runPart1(monkeys []Monkey, lcd int) {
+	runRounds(&monkeys, 20, false, lcd)
+	println("Part 1 result", getPart1Result(&monkeys))
+}
+
+func runPart2(monkeys []Monkey, lcd int) {
+	runRounds(&monkeys, 10000, true, lcd)
+	println("Part 2 result", getPart1Result(&monkeys))
+}
+
+func getLCD(monkeys []Monkey) int {
+	result := 1
+	for _, monkey := range monkeys {
+		result = result * monkey.test.divisibleBy
+	}
+	return result
+}
+
 func main() {
 	monkeysLines := readLines()
 	monkeys := parseMonkeys(monkeysLines)
 	for _, monkey := range monkeys {
 		fmt.Println(monkey)
 	}
-	runRounds(&monkeys, 20)
-	println("Part 1 result", getPart1Result(&monkeys))
+	lcd := getLCD(monkeys)
+	runPart1(cloneMonkeys(monkeys), lcd)
+	runPart2(cloneMonkeys(monkeys), lcd)
 }
