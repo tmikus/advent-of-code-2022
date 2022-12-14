@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	"fmt"
+	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -27,10 +30,38 @@ type Operation struct {
 	value   int
 }
 
+func (op *Operation) apply(old int) int {
+	switch op.operand {
+	case Add:
+		if op.old {
+			return old + old
+		}
+		return old + op.value
+	case Multiply:
+		if op.old {
+			return old * old
+		}
+		return old * op.value
+	default:
+		panic("Invalid operand!")
+	}
+}
+
 type Test struct {
 	divisibleBy     int
 	targetWhenFalse int
 	targetWhenTrue  int
+}
+
+func decreaseWorryLevel(worryLevel int) int {
+	return int(math.Floor(float64(worryLevel) / 3.0))
+}
+
+func getPart1Result(monkeys *[]Monkey) int {
+	sortMonkeysDescByInspectedItems(monkeys)
+	monkey1 := (*monkeys)[0]
+	monkey2 := (*monkeys)[1]
+	return monkey1.inspectedItems * monkey2.inspectedItems
 }
 
 func parseMonkey(lines []string) Monkey {
@@ -88,7 +119,6 @@ func parseStartingItems(lines []string) []int {
 	numbers := strings.Split(slices[1], ", ")
 	result := make([]int, 0)
 	for _, str := range numbers {
-		println("Parsing ", str)
 		result = append(result, parseInt(str))
 	}
 	return result
@@ -122,15 +152,18 @@ func readLines() [][]string {
 }
 
 func runRound(monkeys *[]Monkey) {
-	for _, monkey := range *monkeys {
-		runRoundForMonkey(&monkey, monkeys)
+	for monkeyIndex := 0; monkeyIndex < len(*monkeys); monkeyIndex++ {
+		runRoundForMonkey(&(*monkeys)[monkeyIndex], monkeys)
 	}
 }
 
 func runRoundForMonkey(currentMonkey *Monkey, monkeys *[]Monkey) {
-	for _, item := range currentMonkey.items {
-
+	for _, worryLevel := range currentMonkey.items {
+		worryLevel = currentMonkey.operation.apply(worryLevel)
+		worryLevel = decreaseWorryLevel(worryLevel)
+		runTest(worryLevel, currentMonkey, monkeys)
 	}
+	currentMonkey.inspectedItems += len(currentMonkey.items)
 	currentMonkey.items = make([]int, 0)
 }
 
@@ -140,9 +173,28 @@ func runRounds(monkeys *[]Monkey, rounds int) {
 	}
 }
 
+func runTest(worryLevel int, currentMonkey *Monkey, monkeys *[]Monkey) {
+	if worryLevel%currentMonkey.test.divisibleBy == 0 {
+		targetMonkey := &(*monkeys)[currentMonkey.test.targetWhenTrue]
+		targetMonkey.items = append(targetMonkey.items, worryLevel)
+	} else {
+		targetMonkey := &(*monkeys)[currentMonkey.test.targetWhenFalse]
+		targetMonkey.items = append(targetMonkey.items, worryLevel)
+	}
+}
+
+func sortMonkeysDescByInspectedItems(monkeys *[]Monkey) {
+	sort.SliceStable(*monkeys, func(i, j int) bool {
+		return (*monkeys)[i].inspectedItems > (*monkeys)[j].inspectedItems
+	})
+}
+
 func main() {
 	monkeysLines := readLines()
 	monkeys := parseMonkeys(monkeysLines)
+	for _, monkey := range monkeys {
+		fmt.Println(monkey)
+	}
 	runRounds(&monkeys, 20)
-	// TODO: Find the result
+	println("Part 1 result", getPart1Result(&monkeys))
 }
