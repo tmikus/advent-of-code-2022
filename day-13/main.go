@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"sort"
 )
 
 type Equality int
@@ -115,24 +116,70 @@ func readLines() []string {
 	return lines
 }
 
-func getRightOrderCount(NodePairs []NodePair) int {
+func findDecoderKeyPositions(nodes []Node) (int, int) {
+	firstDividerPacket := ArrayNode{
+		items: []Node{ArrayNode{
+			items: []Node{NumberNode{value: 2}},
+		}},
+	}
+	secondDividerPacket := ArrayNode{
+		items: []Node{ArrayNode{
+			items: []Node{NumberNode{value: 6}},
+		}},
+	}
+	firstIndex := findInsertIndex(nodes, firstDividerPacket)
+	secondIndex := findInsertIndex(nodes, secondDividerPacket)
+	return firstIndex, secondIndex + 1
+}
+
+func findInsertIndex(nodes []Node, nodeToInsert Node) int {
+	for index, node := range nodes {
+		equality := nodeToInsert.Compare(node)
+		if equality == IsLower {
+			return index
+		}
+	}
+	return len(nodes)
+}
+
+func getAllNodes(nodePairs []NodePair) []Node {
+	nodes := make([]Node, 0)
+	for _, pair := range nodePairs {
+		nodes = append(nodes, pair.left, pair.right)
+	}
+	return nodes
+}
+
+func getDecoderKey(nodePairs []NodePair) int {
+	nodes := getAllNodes(nodePairs)
+	sortedNodes := sortNodes(nodes)
+	first, second := findDecoderKeyPositions(sortedNodes)
+	return (first + 1) * (second + 1)
+}
+
+func getRightOrderCount(nodePairs []NodePair) int {
 	count := 0
-	for index, pair := range NodePairs {
+	for index, pair := range nodePairs {
 		equality := pair.left.Compare(pair.right)
 		if equality == IsLower {
-			count += (index + 1)
+			count += index + 1
 		}
 	}
 	return count
 }
 
+func sortNodes(nodes []Node) []Node {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		left := nodes[i]
+		right := nodes[j]
+		return left.Compare(right) == IsLower
+	})
+	return nodes
+}
+
 func main() {
 	lines := readLines()
 	nodePairs := parseNodePairs(lines)
-	//for _, pair := range nodePairs {
-	//	fmt.Printf("%v\n", pair.left)
-	//	fmt.Printf("%v\n", pair.right)
-	//	println("==================")
-	//}
 	println("Part 1 result:", getRightOrderCount(nodePairs))
+	println("Part 2 result:", getDecoderKey(nodePairs))
 }
