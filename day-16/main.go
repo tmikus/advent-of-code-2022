@@ -30,6 +30,5 @@ func main() {
 	for _, valve := range valves {
 		fmt.Printf("%v\n", valve)
 	}
-	var openValves []int
-	println("Part 1 result:", findLongestChildFlow(&valves, 30, &openValves, []int{}, 0))
+	println("Part 1 result:", findLongestChildFlow(&valves, 30, 0))
 }

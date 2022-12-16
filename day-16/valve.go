@@ -7,10 +7,11 @@ import (
 )
 
 type Valve struct {
-	childValves       []string
-	childValveIndices []int
-	flowRate          int
-	name              string
+	childValves          []string
+	childValveIndices    []int
+	distancesFromIndices []int
+	flowRate             int
+	name                 string
 }
 
 func findValveIndex(valves *[]Valve, name string) int {
@@ -44,7 +45,20 @@ func readValves(lines []string) []Valve {
 		result = append(result, parseValve(line))
 	}
 	updateValveIndices(&result)
+	updateValveDistances(&result)
 	return result
+}
+
+func updateValveDistances(valves *[]Valve) {
+	for toValveIndex := 0; toValveIndex < len(*valves); toValveIndex++ {
+		valve := &(*valves)[toValveIndex]
+		for fromValveIndex := 0; fromValveIndex < len(*valves); fromValveIndex++ {
+			valve.distancesFromIndices = append(
+				valve.distancesFromIndices,
+				findShortestDistance(valves, fromValveIndex, toValveIndex),
+			)
+		}
+	}
 }
 
 func updateValveIndices(valves *[]Valve) {

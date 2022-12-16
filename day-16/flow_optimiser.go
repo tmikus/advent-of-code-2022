@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 func contains(items *[]int, value int) bool {
 	for i := 0; i < len(*items); i++ {
 		if (*items)[i] == value {
@@ -19,69 +21,71 @@ func countItems(items *[]int, value int) int {
 	return count
 }
 
+type ValveScore struct {
+	timeAfterTravel int
+	score           int
+}
+
+func computeValveScore(
+	valve *Valve,
+	remainingTime int,
+	fromValveIndex int,
+) ValveScore {
+	distance := valve.distancesFromIndices[fromValveIndex]
+	timeAfterTravel := remainingTime - distance - 1
+	return ValveScore{
+		score:           timeAfterTravel * valve.flowRate,
+		timeAfterTravel: timeAfterTravel,
+	}
+}
+
+type BestValve struct {
+	index int
+	score ValveScore
+}
+
+func findNextBestValve(
+	valves *[]Valve,
+	remainingTime int,
+	openValves []int,
+	currentValveIndex int,
+) BestValve {
+	bestValveIndex := -1
+	bestValveScore := ValveScore{}
+	for index := 0; index < len(*valves); index++ {
+		if contains(&openValves, index) {
+			continue
+		}
+		valve := &(*valves)[index]
+		score := computeValveScore(valve, remainingTime, currentValveIndex)
+		if score.score > bestValveScore.score {
+			bestValveScore = score
+			bestValveIndex = index
+		}
+	}
+	return BestValve{
+		index: bestValveIndex,
+		score: bestValveScore,
+	}
+}
+
 func findLongestChildFlow(
 	valves *[]Valve,
 	remainingTime int,
-	openValves *[]int,
-	visitedValves []int,
 	currentValveIndex int,
 ) int {
-	if len(*openValves) == len(*valves) {
-		return 0
-	}
-	if remainingTime < 1 {
-		return 0
-	}
-	currentValve := &(*valves)[currentValveIndex]
-	maxChildFlow := 0
-	for _, nextValveIndex := range currentValve.childValveIndices {
-		childFlow := moveToValve(valves, remainingTime-1, openValves, visitedValves, nextValveIndex)
-		if childFlow > maxChildFlow {
-			maxChildFlow = childFlow
+	score := 0
+	var openValves []int
+	for {
+		if remainingTime <= 0 {
+			break
 		}
+		bestValve := findNextBestValve(valves, remainingTime, openValves, currentValveIndex)
+		fmt.Printf("Opening %d, releasing %d score, remaining time %d\n", bestValve.index, bestValve.score.score, bestValve.score.timeAfterTravel)
+		score += bestValve.score.score
+		remainingTime = bestValve.score.timeAfterTravel
+		openValves = append(openValves, bestValve.index)
+		currentValveIndex = bestValve.index
 	}
-	return maxChildFlow
-}
-
-func moveToValve(
-	valves *[]Valve,
-	remainingTime int,
-	openValves *[]int,
-	visitedValves []int,
-	currentValveIndex int,
-) int {
-	if countItems(&visitedValves, currentValveIndex) > 2 {
-		return 0
-	}
-	visitedValves = append(visitedValves, currentValveIndex)
-	flowAfterOpening := 0
-	if !contains(openValves, currentValveIndex) {
-		currentValve := &(*valves)[currentValveIndex]
-		if currentValve.flowRate > 0 {
-			flowAfterOpening = openValve(valves, remainingTime, openValves, visitedValves, currentValveIndex)
-		}
-	}
-	flowAfterMoving := findLongestChildFlow(valves, remainingTime, openValves, visitedValves, currentValveIndex)
-	if flowAfterMoving > flowAfterOpening {
-		return flowAfterMoving
-	}
-	return flowAfterOpening
-}
-
-func openValve(
-	valves *[]Valve,
-	remainingTime int,
-	openValves *[]int,
-	visitedValves []int,
-	currentValveIndex int,
-) int {
-	if remainingTime < 1 {
-		return 0
-	}
-	currentValve := &(*valves)[currentValveIndex]
-	remainingTime -= 1
-	producedFlow := currentValve.flowRate * remainingTime
-	childOpenValves := *openValves
-	childOpenValves = append(childOpenValves, currentValveIndex)
-	return producedFlow + findLongestChildFlow(valves, remainingTime, &childOpenValves, visitedValves, currentValveIndex)
+	return score
 }
