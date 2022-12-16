@@ -41,4 +41,5 @@ func main() {
 	}
 	startIndex := findStartIndex(&valves)
 	println("Part 1 result:", findLongestChildFlow(&valves, 30, startIndex))
+	println("Part 2 result:", findBestScoreWithElephant(&valves, 26, startIndex))
 }
