@@ -6,7 +6,7 @@ type InfluenceBox struct {
 }
 
 func GetInfluenceBoxForSensor(sensor *Sensor) InfluenceBox {
-	distance := sensor.GetDistance()
+	distance := sensor.distance
 	return InfluenceBox{
 		max: NewVec2(
 			sensor.position.x+distance,

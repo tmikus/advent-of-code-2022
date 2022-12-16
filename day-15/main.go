@@ -29,6 +29,28 @@ func countScannedFields(sensors *[]Sensor, gridDimensions *GridDimensions, y int
 	return result
 }
 
+func findTuningFrequency(sensors *[]Sensor, searchDistance int) int {
+	y := 0
+	x := 0
+	for ; y <= searchDistance; y++ {
+		for x = 0; x <= searchDistance; {
+			if areAllSensorsOutsideRange(sensors, &x, y) {
+				return x*4000000 + y
+			}
+		}
+	}
+	panic("Not found!")
+}
+
+func areAllSensorsOutsideRange(sensors *[]Sensor, x *int, y int) bool {
+	for sensorIndex := 0; sensorIndex < len(*sensors); sensorIndex++ {
+		if (*sensors)[sensorIndex].IsWithinSensorRangeAndUpdateX(x, y) {
+			return false
+		}
+	}
+	return true
+}
+
 func parseInt(input string) int {
 	value, err := strconv.ParseInt(input, 10, 32)
 	if err != nil {
@@ -49,6 +71,6 @@ func readSensors() []Sensor {
 func main() {
 	sensors := readSensors()
 	gridDimensions := GetGridDimensions(&sensors)
-	//printGrid(&grid)
 	println("Part 1 result:", countScannedFields(&sensors, &gridDimensions, 2000000))
+	println("Part 2 result:", findTuningFrequency(&sensors, 4000000))
 }
