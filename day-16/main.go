@@ -7,6 +7,15 @@ import (
 	"strconv"
 )
 
+func findStartIndex(valves *[]Valve) int {
+	for index, valve := range *valves {
+		if valve.name == "AA" {
+			return index
+		}
+	}
+	panic("Start point not found!")
+}
+
 func parseInt(input string) int {
 	value, err := strconv.ParseInt(input, 10, 32)
 	if err != nil {
@@ -30,5 +39,6 @@ func main() {
 	for _, valve := range valves {
 		fmt.Printf("%v\n", valve)
 	}
-	println("Part 1 result:", findLongestChildFlow(&valves, 30, 0))
+	startIndex := findStartIndex(&valves)
+	println("Part 1 result:", findLongestChildFlow(&valves, 30, startIndex))
 }

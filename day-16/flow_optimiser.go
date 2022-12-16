@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 func contains(items *[]int, value int) bool {
 	for i := 0; i < len(*items); i++ {
 		if (*items)[i] == value {
@@ -9,16 +7,6 @@ func contains(items *[]int, value int) bool {
 		}
 	}
 	return false
-}
-
-func countItems(items *[]int, value int) int {
-	count := 0
-	for i := 0; i < len(*items); i++ {
-		if (*items)[i] == value {
-			count++
-		}
-	}
-	return count
 }
 
 type ValveScore struct {
@@ -39,34 +27,33 @@ func computeValveScore(
 	}
 }
 
-type BestValve struct {
-	index int
-	score ValveScore
-}
-
-func findNextBestValve(
+func findBestValveScore(
 	valves *[]Valve,
-	remainingTime int,
 	openValves []int,
+	remainingTime int,
 	currentValveIndex int,
-) BestValve {
-	bestValveIndex := -1
-	bestValveScore := ValveScore{}
+) int {
+	if remainingTime < 2 {
+		return 0
+	}
+	bestScore := 0
 	for index := 0; index < len(*valves); index++ {
 		if contains(&openValves, index) {
 			continue
 		}
 		valve := &(*valves)[index]
+		if valve.flowRate == 0 {
+			continue
+		}
 		score := computeValveScore(valve, remainingTime, currentValveIndex)
-		if score.score > bestValveScore.score {
-			bestValveScore = score
-			bestValveIndex = index
+		childOpenValves := openValves
+		childOpenValves = append(childOpenValves, index)
+		score.score += findBestValveScore(valves, childOpenValves, score.timeAfterTravel, index)
+		if score.score > bestScore {
+			bestScore = score.score
 		}
 	}
-	return BestValve{
-		index: bestValveIndex,
-		score: bestValveScore,
-	}
+	return bestScore
 }
 
 func findLongestChildFlow(
@@ -74,18 +61,10 @@ func findLongestChildFlow(
 	remainingTime int,
 	currentValveIndex int,
 ) int {
-	score := 0
-	var openValves []int
-	for {
-		if remainingTime <= 0 {
-			break
-		}
-		bestValve := findNextBestValve(valves, remainingTime, openValves, currentValveIndex)
-		fmt.Printf("Opening %d, releasing %d score, remaining time %d\n", bestValve.index, bestValve.score.score, bestValve.score.timeAfterTravel)
-		score += bestValve.score.score
-		remainingTime = bestValve.score.timeAfterTravel
-		openValves = append(openValves, bestValve.index)
-		currentValveIndex = bestValve.index
-	}
-	return score
+	return findBestValveScore(
+		valves,
+		[]int{},
+		remainingTime,
+		currentValveIndex,
+	)
 }
