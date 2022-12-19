@@ -80,7 +80,7 @@ func (b *Board) GetStartPoint() Vec2 {
 	if highestShape == nil {
 		return NewVec2(X_OFFSET, Y_OFFSET)
 	}
-	return NewVec2(X_OFFSET, highestShape.boundingBox.topLeft.y+Y_OFFSET)
+	return NewVec2(X_OFFSET, highestShape.boundingBox.topLeft.y+Y_OFFSET+1)
 }
 
 func NewBoard(directions []MoveDirection) Board {

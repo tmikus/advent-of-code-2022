@@ -42,8 +42,7 @@ func main() {
 	line := readLine()
 	directions := parseDirections(line)
 	board := NewBoard(directions)
-	simulateShapes(&board, 2)
-	height := board.GetHighestShape().boundingBox.topLeft.y
+	simulateShapes(&board, 2022)
+	height := board.GetHighestShape().boundingBox.topLeft.y + 1
 	println("Part 1 result:", height)
-	printBoard(&board)
 }
