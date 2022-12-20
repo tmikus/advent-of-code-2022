@@ -13,6 +13,14 @@ func countEmptySides(cubes *[]Cube) int {
 	return result
 }
 
+func countSidesFacingOutside(cubes *[]Cube) int {
+	result := 0
+	for index := 0; index < len(*cubes); index++ {
+		result += (*cubes)[index].CountSidesFacingOutside()
+	}
+	return result
+}
+
 func readCubePositions() []Vec3 {
 	scanner := bufio.NewScanner(os.Stdin)
 	cubes := make([]Vec3, 0)
@@ -24,6 +32,8 @@ func readCubePositions() []Vec3 {
 
 func main() {
 	positions := readCubePositions()
-	cubes := createCubeGraph(positions)
+	mapSize, cubes, cubesMap := createCubeGraph(positions)
 	println("Part 1 result:", countEmptySides(&cubes))
+	tagCubesFacingOutside(mapSize, &cubesMap)
+	println("Part 2 result:", countSidesFacingOutside(&cubes))
 }

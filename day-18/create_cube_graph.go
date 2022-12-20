@@ -1,13 +1,13 @@
 package main
 
-func createCubeGraph(positions []Vec3) []Cube {
+func createCubeGraph(positions []Vec3) (Vec3, []Cube, [][][]*Cube) {
 	mapSize := getCubeMapSize(&positions)
 	cubes, cubeMap := createCubeMap(positions, mapSize)
 	for index := 0; index < len(cubes); index++ {
 		cube := &cubes[index]
 		updateAdjacencyPointers(cube, &cubeMap, mapSize)
 	}
-	return cubes
+	return mapSize, cubes, cubeMap
 }
 
 // X->Y->Z
