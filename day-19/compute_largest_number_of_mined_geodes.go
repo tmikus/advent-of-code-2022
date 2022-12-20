@@ -30,9 +30,6 @@ func constructBestRobot(state *WorldState) int {
 
 func constructClayRobot(state WorldState) int {
 	if !waitUntilCanAfford(&state, &state.blueprint.clayRobotCost) {
-		//if state.geodeCount == 11 {
-		//	println(state.ToString())
-		//}
 		return state.geodeCount
 	}
 	progressTime(&state, 1)
@@ -43,9 +40,6 @@ func constructClayRobot(state WorldState) int {
 
 func constructGeodeRobot(state WorldState) int {
 	if !waitUntilCanAfford(&state, &state.blueprint.geodeRobotCost) {
-		//if state.geodeCount == 11 {
-		//	println(state.ToString())
-		//}
 		return state.geodeCount
 	}
 	progressTime(&state, 1)
@@ -56,9 +50,6 @@ func constructGeodeRobot(state WorldState) int {
 
 func constructObsidianRobot(state WorldState) int {
 	if !waitUntilCanAfford(&state, &state.blueprint.obsidianRobotCost) {
-		//if state.geodeCount == 11 {
-		//	println(state.ToString())
-		//}
 		return state.geodeCount
 	}
 	progressTime(&state, 1)
@@ -69,9 +60,6 @@ func constructObsidianRobot(state WorldState) int {
 
 func constructOreRobot(state WorldState) int {
 	if !waitUntilCanAfford(&state, &state.blueprint.oreRobotCost) {
-		//if state.geodeCount == 11 {
-		//	println(state.ToString())
-		//}
 		return state.geodeCount
 	}
 	progressTime(&state, 1)
@@ -80,13 +68,39 @@ func constructOreRobot(state WorldState) int {
 	return constructBestRobot(&state)
 }
 
+func getTimeToAffordRobot(state *WorldState, cost *RobotCost) int {
+	if cost.clay > 0 && state.clayRobotCount == 0 {
+		return -1
+	}
+	if cost.obsidian > 0 && state.obsidianRobotCount == 0 {
+		return -1
+	}
+	// Ore always is positive so no problems here
+	oreTurns := getTimeToAfford(
+		cost.ore,
+		state.oreCount,
+		state.oreRobotCount,
+	)
+	clayTurns := getTimeToAfford(
+		cost.clay,
+		state.clayCount,
+		state.clayRobotCount,
+	)
+	obsidianTurns := getTimeToAfford(
+		cost.obsidian,
+		state.obsidianCount,
+		state.obsidianRobotCount,
+	)
+	return max(oreTurns, clayTurns, obsidianTurns)
+}
+
 func getTimeToAfford(required int, current int, perTurn int) int {
 	if required == 0 || required <= current {
 		return 0
 	}
-	if perTurn == 0 {
-		panic("It will never finish!")
-	}
+	//if perTurn == 0 {
+	//	panic("It will never finish!")
+	//}
 	return int(math.Ceil(float64(required-current) / float64(perTurn)))
 }
 
@@ -105,29 +119,10 @@ func progressTime(state *WorldState, turns int) {
 }
 
 func waitUntilCanAfford(state *WorldState, cost *RobotCost) bool {
-	if cost.clay > 0 && state.clayRobotCount == 0 {
+	maxTurns := getTimeToAffordRobot(state, cost)
+	if maxTurns == -1 {
 		return false
 	}
-	if cost.obsidian > 0 && state.obsidianRobotCount == 0 {
-		return false
-	}
-	// Ore always is positive so no problems here
-	oreTurns := getTimeToAfford(
-		cost.ore,
-		state.oreCount,
-		state.oreRobotCount,
-	)
-	clayTurns := getTimeToAfford(
-		cost.clay,
-		state.clayCount,
-		state.clayRobotCount,
-	)
-	obsidianTurns := getTimeToAfford(
-		cost.obsidian,
-		state.obsidianCount,
-		state.obsidianRobotCount,
-	)
-	maxTurns := max(oreTurns, clayTurns, obsidianTurns)
 	progressTime(state, min(maxTurns, state.remainingTime))
 	if maxTurns >= state.remainingTime-1 { // There's no point to build a robot that doesn't improve the result
 		return false
