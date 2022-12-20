@@ -1,9 +1,8 @@
 package main
 
 func createCubeGraph(positions []Vec3) []Cube {
-	cubes := createCubes(positions)
-	mapSize := getCubeMapSize(&cubes)
-	cubeMap := createCubeMap(&cubes, mapSize)
+	mapSize := getCubeMapSize(&positions)
+	cubes, cubeMap := createCubeMap(positions, mapSize)
 	for index := 0; index < len(cubes); index++ {
 		cube := &cubes[index]
 		updateAdjacencyPointers(cube, &cubeMap, mapSize)
@@ -12,21 +11,14 @@ func createCubeGraph(positions []Vec3) []Cube {
 }
 
 // X->Y->Z
-func createCubeMap(cubes *[]Cube, mapSize Vec3) [][][]*Cube {
-	cubeMap := initCubeMap(mapSize)
-	for index := 0; index < len(*cubes); index++ {
-		cube := &(*cubes)[index]
-		cubeMap[cube.position.x][cube.position.y][cube.position.z] = cube
-	}
-	return cubeMap
-}
-
-func createCubes(positions []Vec3) []Cube {
-	cubes := make([]Cube, 0)
+func createCubeMap(positions []Vec3, size Vec3) ([]Cube, [][][]*Cube) {
+	cubes := initCubes(size)
+	cubeMap := initCubeMap(&cubes, size)
 	for _, position := range positions {
-		cubes = append(cubes, NewCube(position))
+		cube := cubeMap[position.x][position.y][position.z]
+		cube.void = false
 	}
-	return cubes
+	return cubes, cubeMap
 }
 
 func getCube(cubeMap *[][][]*Cube, mapSize Vec3, position Vec3) *Cube {
@@ -41,35 +33,52 @@ func getCube(cubeMap *[][][]*Cube, mapSize Vec3, position Vec3) *Cube {
 	return (*cubeMap)[position.x][position.y][position.z]
 }
 
-func getCubeMapSize(cubes *[]Cube) Vec3 {
+func getCubeMapSize(positions *[]Vec3) Vec3 {
 	maxX := 0
 	maxY := 0
 	maxZ := 0
-	for index := 0; index < len(*cubes); index++ {
-		cube := &(*cubes)[index]
-		if cube.position.x > maxX {
-			maxX = cube.position.x
+	for index := 0; index < len(*positions); index++ {
+		position := &(*positions)[index]
+		if position.x > maxX {
+			maxX = position.x
 		}
-		if cube.position.y > maxY {
-			maxY = cube.position.y
+		if position.y > maxY {
+			maxY = position.y
 		}
-		if cube.position.z > maxZ {
-			maxZ = cube.position.z
+		if position.z > maxZ {
+			maxZ = position.z
 		}
 	}
 	return NewVec3(maxX+1, maxY+1, maxZ+1)
 }
 
-func initCubeMap(size Vec3) [][][]*Cube {
-	result := make([][][]*Cube, 0)
-	for x := 0; x <= size.x; x++ {
+func initCubeMap(cubes *[]Cube, size Vec3) [][][]*Cube {
+	cubeMap := make([][][]*Cube, 0)
+	for x := 0; x < size.x; x++ {
 		inner := make([][]*Cube, 0)
-		for y := 0; y <= size.y; y++ {
-			inner = append(inner, make([]*Cube, size.z))
+		for y := 0; y < size.y; y++ {
+			row := make([]*Cube, size.z)
+			for z := 0; z < size.z; z++ {
+				cube := &(*cubes)[(x*size.y*size.z)+(y*size.z)+z]
+				row[z] = cube
+			}
+			inner = append(inner, row)
 		}
-		result = append(result, inner)
+		cubeMap = append(cubeMap, inner)
 	}
-	return result
+	return cubeMap
+}
+
+func initCubes(size Vec3) []Cube {
+	cubes := make([]Cube, 0)
+	for x := 0; x < size.x; x++ {
+		for y := 0; y < size.y; y++ {
+			for z := 0; z < size.z; z++ {
+				cubes = append(cubes, NewCube(NewVec3(x, y, z)))
+			}
+		}
+	}
+	return cubes
 }
 
 func updateAdjacencyPointers(cube *Cube, cubeMap *[][][]*Cube, mapSize Vec3) {

@@ -8,7 +8,7 @@ import (
 func countEmptySides(cubes *[]Cube) int {
 	result := 0
 	for index := 0; index < len(*cubes); index++ {
-		result += (*cubes)[index].CountEmptySides()
+		result += (*cubes)[index].CountEmptySides(false)
 	}
 	return result
 }
