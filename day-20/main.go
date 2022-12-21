@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 )
@@ -28,27 +27,6 @@ func findZeroNumber(numbers *[]Number) *Number {
 	panic("Number 0 not found!")
 }
 
-func findNextNumberToMove(numbers *[]Number) *Number {
-	for i := 0; i < len(*numbers); i++ {
-		number := &(*numbers)[i]
-		if !number.moved {
-			return number
-		}
-	}
-	return nil
-}
-
-func getGroveNumber(zeroNumber *Number, numbers *[]Number, offset int) int {
-	index := (offset + 1) % len(*numbers)
-	println("Groove number index:", index)
-	number := zeroNumber
-	for i := 0; i < index; i++ {
-		number = number.after
-	}
-	fmt.Printf("Grove number %v: %v\n", offset, number.value)
-	return number.value
-}
-
 func getGroveCoordinates(numbers *[]Number) int {
 	a := 0
 	b := 0
@@ -65,46 +43,32 @@ func getGroveCoordinates(numbers *[]Number) int {
 		}
 		number = number.after
 	}
+	println("A:", a)
+	println("B:", b)
+	println("C:", c)
 	return a + b + c
-	//return getGroveNumber(zeroNumber, numbers, 1000) + getGroveNumber(zeroNumber, numbers, 2000) + getGroveNumber(zeroNumber, numbers, 3000)
 }
 
-func max(a, b int) int {
-	if a < b {
-		return b
-	}
-	return a
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-//     |
-// 0, -2, 2, 3
-
-// 0  (before: 3, after: -2)
-// -2 (before: 0, after: 2)
-// 2  (before: -2, after: 3)
-// 3  (before: 2, after: 0)
-
-func moveNumber(numberToMove *Number, offset int) {
+func moveNumber(numberToMove *Number) {
 	numberToMove.moved = true
-	if offset == 0 {
-		return
-	}
 	currentNumber := numberToMove
-	if offset > 0 {
-		for i := 0; i < offset; i++ {
+	if numberToMove.value >= 0 {
+		for i := 0; i < numberToMove.value; i++ {
 			currentNumber = currentNumber.after
+			if currentNumber == numberToMove {
+				currentNumber = currentNumber.after
+			}
 		}
 	} else {
-		for i := 0; i >= offset; i-- {
+		for i := 0; i >= numberToMove.value; i-- {
 			currentNumber = currentNumber.before
+			if currentNumber == numberToMove {
+				currentNumber = currentNumber.before
+			}
 		}
+	}
+	if currentNumber == numberToMove {
+		return
 	}
 	// Remove the number from current position
 	numberToMove.before.after = numberToMove.after
@@ -117,68 +81,12 @@ func moveNumber(numberToMove *Number, offset int) {
 	currentNumber.after = numberToMove
 }
 
-func moveNextNumber(numbers *[]Number) bool {
-	numberToMove := findNextNumberToMove(numbers)
-	if numberToMove == nil {
-		return false
-	}
-	offset := numberToMove.value % len(*numbers)
-	moveNumber(numberToMove, offset)
-	return true
-}
-
 func parseInt(input string) int {
 	value, err := strconv.ParseInt(input, 10, 32)
 	if err != nil {
 		panic("Invalid number")
 	}
 	return int(value)
-}
-
-func printNumbersBackward(numbers *[]Number) {
-	number := findZeroNumber(numbers)
-	numbersStr := ""
-	indicatorsStr := ""
-	for index := 0; index < len(*numbers); index++ {
-		numberLength := len(numbersStr)
-		numbersStr += fmt.Sprintf("%v", number.value)
-		numberLength = len(numbersStr) - numberLength
-		numbersStr += ", "
-		for i := 0; i < numberLength; i++ {
-			if number.moved {
-				indicatorsStr += "^"
-			} else {
-				indicatorsStr += " "
-			}
-		}
-		indicatorsStr += "  "
-		number = number.before
-	}
-	println(numbersStr)
-	println(indicatorsStr)
-}
-
-func printNumbersForward(numbers *[]Number) {
-	number := findZeroNumber(numbers)
-	numbersStr := ""
-	indicatorsStr := ""
-	for index := 0; index < len(*numbers); index++ {
-		numberLength := len(numbersStr)
-		numbersStr += fmt.Sprintf("%v", number.value)
-		numberLength = len(numbersStr) - numberLength
-		numbersStr += ", "
-		for i := 0; i < numberLength; i++ {
-			if number.moved {
-				indicatorsStr += "^"
-			} else {
-				indicatorsStr += " "
-			}
-		}
-		indicatorsStr += "  "
-		number = number.after
-	}
-	println(numbersStr)
-	println(indicatorsStr)
 }
 
 func setNumberPointers(numbers *[]Number) {
@@ -212,8 +120,9 @@ func readNumbers() []Number {
 
 func main() {
 	numbers := readNumbers()
-	for moveNextNumber(&numbers) {
-		continue
+	for index := 0; index < len(numbers); index++ {
+		number := &numbers[index]
+		moveNumber(number)
 	}
 	println("Part 1 result:", getGroveCoordinates(&numbers))
 }
