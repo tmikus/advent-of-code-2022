@@ -9,7 +9,6 @@ import (
 type Number struct {
 	after  *Number
 	before *Number
-	moved  bool
 	value  int
 }
 
@@ -49,19 +48,21 @@ func getGroveCoordinates(numbers *[]Number) int {
 	return a + b + c
 }
 
-func moveNumber(numberToMove *Number) {
-	numberToMove.moved = true
+func moveNumber(numbers *[]Number, numberToMove *Number) {
+	offset := numberToMove.value % (len(*numbers) - 1)
 	currentNumber := numberToMove
 	if numberToMove.value >= 0 {
-		for i := 0; i < numberToMove.value; i++ {
+		for i := 0; i < offset; i++ {
 			currentNumber = currentNumber.after
+			// Skip current number
 			if currentNumber == numberToMove {
 				currentNumber = currentNumber.after
 			}
 		}
 	} else {
-		for i := 0; i >= numberToMove.value; i-- {
+		for i := 0; i >= offset; i-- {
 			currentNumber = currentNumber.before
+			// Skip current number
 			if currentNumber == numberToMove {
 				currentNumber = currentNumber.before
 			}
@@ -89,6 +90,41 @@ func parseInt(input string) int {
 	return int(value)
 }
 
+func printPart1Result(numbers []Number) {
+	setNumberPointers(&numbers)
+	for index := 0; index < len(numbers); index++ {
+		number := &numbers[index]
+		moveNumber(&numbers, number)
+	}
+	println("Part 1 result:", getGroveCoordinates(&numbers))
+}
+
+func printPart2Result(numbers []Number) {
+	setNumberPointers(&numbers)
+	// Set decryption key
+	for i := 0; i < len(numbers); i++ {
+		numbers[i].value *= 811589153
+	}
+	// Iterate 10 times
+	for iteration := 0; iteration < 10; iteration++ {
+		for index := 0; index < len(numbers); index++ {
+			number := &numbers[index]
+			moveNumber(&numbers, number)
+		}
+	}
+	println("Part 2 result:", getGroveCoordinates(&numbers))
+}
+
+func readNumbers() []Number {
+	scanner := bufio.NewScanner(os.Stdin)
+	numbers := make([]Number, 0)
+	for scanner.Scan() {
+		line := scanner.Text()
+		numbers = append(numbers, NewNumber(parseInt(line)))
+	}
+	return numbers
+}
+
 func setNumberPointers(numbers *[]Number) {
 	for numberIndex := 0; numberIndex < len(*numbers); numberIndex++ {
 		prevNumberIndex := numberIndex - 1
@@ -107,22 +143,8 @@ func setNumberPointers(numbers *[]Number) {
 	}
 }
 
-func readNumbers() []Number {
-	scanner := bufio.NewScanner(os.Stdin)
-	numbers := make([]Number, 0)
-	for scanner.Scan() {
-		line := scanner.Text()
-		numbers = append(numbers, NewNumber(parseInt(line)))
-	}
-	setNumberPointers(&numbers)
-	return numbers
-}
-
 func main() {
 	numbers := readNumbers()
-	for index := 0; index < len(numbers); index++ {
-		number := &numbers[index]
-		moveNumber(number)
-	}
-	println("Part 1 result:", getGroveCoordinates(&numbers))
+	printPart1Result(numbers)
+	printPart2Result(numbers)
 }
