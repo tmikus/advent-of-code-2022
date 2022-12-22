@@ -27,6 +27,7 @@ func parseMapFields(line string) []MapField {
 
 func readMapFields(scanner *bufio.Scanner) [][]MapField {
 	mapFields := make([][]MapField, 0)
+	longestRow := 0
 	for {
 		if !scanner.Scan() {
 			break
@@ -35,7 +36,30 @@ func readMapFields(scanner *bufio.Scanner) [][]MapField {
 		if len(line) == 0 {
 			break
 		}
-		mapFields = append(mapFields, parseMapFields(line))
+		row := parseMapFields(line)
+		if len(row) > longestRow {
+			longestRow = len(row)
+		}
+		mapFields = append(mapFields, row)
 	}
+	addPaddingToRows(&mapFields, longestRow)
 	return mapFields
+}
+
+func addPaddingToRows(fields *[][]MapField, width int) {
+	for rowIndex := 0; rowIndex < len(*fields); rowIndex++ {
+		row := (*fields)[rowIndex]
+		rowWidth := len(row)
+		if rowWidth > width {
+			panic("The row should not be longer than the max width!")
+		}
+		if rowWidth == width {
+			continue
+		}
+		missingFields := width - rowWidth
+		for x := 0; x < missingFields; x++ {
+			row = append(row, None)
+		}
+		(*fields)[rowIndex] = row
+	}
 }

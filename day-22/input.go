@@ -6,17 +6,17 @@ import (
 )
 
 type Input struct {
-	instructions string // TODO: Come up with a better way of representing this
-	rawMap       [][]MapField
+	movements []Movement
+	rawMap    [][]MapField
 }
 
 func ReadInput() Input {
 	scanner := bufio.NewScanner(os.Stdin)
 	rawMap := readMapFields(scanner)
-	instructions := readInstructions(scanner)
+	movements := ParseMovements(readInstructions(scanner))
 	return Input{
-		instructions: instructions,
-		rawMap:       rawMap,
+		movements: movements,
+		rawMap:    rawMap,
 	}
 }
 
