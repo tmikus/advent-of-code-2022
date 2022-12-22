@@ -57,7 +57,7 @@ func compileDynamicMonkey(
 		monkeysMap,
 		definition.rightMonkeyId,
 	)
-	dm := NewDynamicMonkey(leftMonkey, rightMonkey, definition.operation)
+	dm := NewDynamicMonkey(definition, leftMonkey, rightMonkey)
 	(*dynamicMonkeys)[definition.index] = dm
 	(*monkeysMap)[definition.id] = &(*dynamicMonkeys)[definition.index]
 	return &(*dynamicMonkeys)[definition.index]
@@ -68,7 +68,7 @@ func compileStaticMonkey(
 	monkeysMap *map[string]Monkey,
 	definition MonkeyDefinition,
 ) Monkey {
-	sm := NewStaticMonkey(definition.value)
+	sm := NewStaticMonkey(definition)
 	(*staticMonkeys)[definition.index] = sm
 	(*monkeysMap)[definition.id] = &(*staticMonkeys)[definition.index]
 	return &(*staticMonkeys)[definition.index]
@@ -103,12 +103,36 @@ func readMonkeyDefinitions() []MonkeyDefinition {
 	return lines
 }
 
-func main() {
-	definitions := readMonkeyDefinitions()
+func printPart1Result(definitions []MonkeyDefinition) {
 	definitionsMap := buildMonkeyDefinitionsMap(definitions)
 	staticMonkeys := make([]StaticMonkey, len(definitions))
 	dynamicMonkeys := make([]DynamicMonkey, len(definitions))
 	monkeysMap := make(map[string]Monkey)
 	rootMonkey := getOrCompileMonkey(&definitionsMap, &staticMonkeys, &dynamicMonkeys, &monkeysMap, "root")
 	println("Part 1 result:", rootMonkey.GetResult())
+}
+
+func printPart2Result(definitions []MonkeyDefinition) {
+	definitionsMap := buildMonkeyDefinitionsMap(definitions)
+	staticMonkeys := make([]StaticMonkey, len(definitions))
+	dynamicMonkeys := make([]DynamicMonkey, len(definitions))
+	monkeysMap := make(map[string]Monkey)
+	rootDefinition := definitionsMap["root"]
+	leftMonkey := getOrCompileMonkey(&definitionsMap, &staticMonkeys, &dynamicMonkeys, &monkeysMap, rootDefinition.leftMonkeyId)
+	rightMonkey := getOrCompileMonkey(&definitionsMap, &staticMonkeys, &dynamicMonkeys, &monkeysMap, rootDefinition.rightMonkeyId)
+	value := 0
+	if leftMonkey.DependsOnMonkey("humn") {
+		rightValue := rightMonkey.GetResult()
+		value = leftMonkey.ComputeUnknownValueOf("humn", rightValue)
+	} else {
+		leftValue := leftMonkey.GetResult()
+		value = rightMonkey.ComputeUnknownValueOf("humn", leftValue)
+	}
+	println("Part 2 result:", value)
+}
+
+func main() {
+	definitions := readMonkeyDefinitions()
+	printPart1Result(definitions)
+	printPart2Result(definitions)
 }
