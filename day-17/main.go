@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 )
 
@@ -39,14 +38,14 @@ func readLine() string {
 	return scanner.Text()
 }
 
+func computeBoardHeight(directions []MoveDirection, shapesCount int) int {
+	board := NewBoard(directions)
+	return simulateShapes(&board, shapesCount)
+}
+
 func main() {
 	line := readLine()
 	directions := parseDirections(line)
-	for i := 1; i <= 2022; i++ {
-		board := NewBoard(directions)
-		simulateShapes(&board, i)
-		height := board.GetHighestShape().boundingBox.topLeft.y + 1
-		fmt.Printf("%v: %v\n", i, height)
-	}
-
+	println("Part 1 result: ", computeBoardHeight(directions, 2022))
+	println("Part 2 result: ", computeBoardHeight(directions, 1000000000000))
 }

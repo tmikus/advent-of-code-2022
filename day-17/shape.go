@@ -6,10 +6,18 @@ type Shape struct {
 }
 
 func (s *Shape) Intersects(other *Shape) bool {
+	if !s.IsNearTo(other) {
+		return false
+	}
 	if !s.boundingBox.Intersects(&other.boundingBox) {
 		return false
 	}
 	return s.PointsIntersect(other)
+}
+
+func (s *Shape) IsNearTo(other *Shape) bool {
+	distance := s.boundingBox.topLeft.y - other.boundingBox.topLeft.y
+	return distance > -5 || distance < 5
 }
 
 func (s *Shape) Move(offset Vec2) {
